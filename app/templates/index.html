@@ -3,7 +3,11 @@
 {% block title %}{{ super() }} - Home{% endblock %}
 {% block page_content %}
 <div class="page-header">
-    <h1>Hello World!</h1>
+    {% if current_user.is_authenticated %}
+    <p>Hello {{ current_user.username }}!</p>
+    {% else %}
+    <p>Hello Stranger!</p>
+    {% endif %}
     <p>That was {{ moment(current_time).fromNow(refresh=True) }}.</p>
 </div>
 {% endblock %}

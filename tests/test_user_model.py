@@ -1,5 +1,8 @@
 import unittest
-from app.models import User
+from app.models import User, AnonymousUser, Permission
+from app import create_app
+from itsdangerous import URLSafeTimedSerializer as Serializer
+from time import sleep
 
 
 class UserModelTestCase(unittest.TestCase):
@@ -18,3 +21,31 @@ class UserModelTestCase(unittest.TestCase):
         u = User(password='cat')
         u2 = User(password='cat')
         self.assertTrue(u.password_hash != u2.password_hash)
+    def test_token_generation(self):
+        self.app = create_app('testing')
+        self.app_context = self.app.app_context()
+        self.app_context.push()
+        u = User(id=1)
+        token = u.generate_confirmation_token()
+        u.confirm(token, max_age=1)
+        self.assertTrue(u.confirmed)
+        u.confirmed = False
+        sleep(0.1)
+        u.confirm(token, max_age=0)
+        self.assertTrue(u.confirmed)
+        self.app_context.pop()
+    def test_user_role(self):
+        u = User(email='john@example.com', password='cat')
+        self.assertTrue(u.can(Permission.FOLLOW))
+        self.assertTrue(u.can(Permission.COMMENT))
+        self.assertTrue(u.can(Permission.WRITE))
+        self.assertFalse(u.can(Permission.MODERATE))
+        self.assertFalse(u.can(Permission.ADMIN))
+        
+    def test_anonymous_user(self):
+        u = AnonymousUser()
+        self.assertFalse(u.can(Permission.FOLLOW))
+        self.assertFalse(u.can(Permission.COMMENT))
+        self.assertFalse(u.can(Permission.WRITE))
+        self.assertFalse(u.can(Permission.MODERATE))
+        self.assertFalse(u.can(Permission.ADMIN))
