@@ -140,7 +140,7 @@ class User(UserMixin, db.Model):
     def gravatar_hash(self):
         return hashlib.md5(self.email.encode('utf-8')).hexdigest()
     
-    def gravatar(self, size=100, default='monsterid', rating='r'):
+    def gravatar(self, size=100, default='wavatart', rating='x'):
         url = 'https://www.gravatar.com/avatar/'
         hash = self.avatar_hash or self.gravatar_hash()
         return '{url}/{hash}?s={size}&d={default}&r={rating}'.format(url=url,

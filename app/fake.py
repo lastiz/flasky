@@ -5,7 +5,7 @@ from . import db
 from .models import User, Post
 
 
-def user(count=100):
+def users(count=100):
     fake = Faker()
     i = 0
     while i < count:
@@ -27,7 +27,7 @@ def user(count=100):
         i += 1
 
 def posts(count=100):
-    fake = Faker
+    fake = Faker()
     user_count = User.query.count()
 
     for i in range(count):
