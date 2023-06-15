@@ -2,11 +2,14 @@ from . import db, login_manager
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import UserMixin, AnonymousUserMixin
 from flask import current_app
+from markdown import markdown
+import bleach
 from itsdangerous import URLSafeTimedSerializer as Serializer
-from . import login_manager
 from datetime import datetime
 import hashlib
 
+
+login_manager.anonymous_user = 'AnonymousUser'
 
 
 class Permission:
@@ -140,7 +143,7 @@ class User(UserMixin, db.Model):
     def gravatar_hash(self):
         return hashlib.md5(self.email.encode('utf-8')).hexdigest()
     
-    def gravatar(self, size=100, default='wavatart', rating='x'):
+    def gravatar(self, size=100, default='wavatar', rating='x'):
         url = 'https://www.gravatar.com/avatar/'
         hash = self.avatar_hash or self.gravatar_hash()
         return '{url}/{hash}?s={size}&d={default}&r={rating}'.format(url=url,
@@ -162,12 +165,24 @@ class Post(db.Model):
     __tablename__ = 'posts'
     id = db.Column(db.Integer, primary_key=True)
     body = db.Column(db.Text)
+    body_html = db.Column(db.Text)
     timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
     author_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+
+    @staticmethod
+    def on_changed_body(target, value, oldvalue, initiator):
+        allowed_tags = ['a', 'abbr', 'acronym', 'b', 'blockquote', 'code',
+                        'em', 'i', 'li', 'ol', 'pre', 'strong', 'ul',
+                        'h1', 'h2', 'h3', 'p']
+        target.body_html = bleach.linkify(bleach.clean(
+            markdown(value, output_format='html'),
+            tags=allowed_tags, strip=True
+        ))
+
+
+db.event.listen(Post.body, 'set', Post.on_changed_body)
 
 
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
-
-login_manager.anonymous_user = AnonymousUser

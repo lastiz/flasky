@@ -1,3 +1,4 @@
+{% import "_macros.html" as macros %}
 <ul class="posts">
     {% for post in posts %}
     <li class="post">
@@ -13,7 +14,32 @@
                 {{ post.author.username }}
             </a>
         </div>
-        <div class="post-body">{{ post.body }}</div>
+        <div class="post-body">
+            {% if post.body_html %}
+                {{ post.body_html | safe }}
+            {% else %}
+                {{ post.body }}
+            {% endif %}
+            <div class="post-footer">
+                <a href="{{ url_for('.post', id=post.id) }}">
+                    <span class="label label-default">Permalink</span>
+                </a>
+                {% if current_user == post.author %}
+                <a href="{{ url_for('.edit', id=post.id) }}">
+                    <span class="label label-primary">Edit</span>
+                </a>
+                {% elif current_user.is_administrator() %}
+                <a href="{{ url_for('.edit', id=post.id) }}">
+                    <span class="label label-danger">Edit [Admin]</span>
+                </a>
+                {% endif %}
+            </div>
+        </div>
     </li>
     {% endfor %}
 </ul>
+{% if pagination %}
+<div class="pagination">
+    {{ macros.pagination_widget(pagination, '.index') }}
+</div>
+{% endif %}
